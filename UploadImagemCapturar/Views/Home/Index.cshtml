@@ -1,0 +1,104 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+
+<form asp-action="UploadFile" asp-controller="Home" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" />
+    <input type="submit" value="Upload" />
+</form>
+<div>
+    <br />
+    <video id="video" width="320" height="240"></video>
+    <canvas id="canvas" width="320" height="240"></canvas>
+    <button onclick="capture()">Capture</button>
+    <button onclick="save()">Save</button>
+    <button onclick="RecuperarImagem()">Recuperar Imagem</button>
+    <button onclick="BaixarArquivo()">Dowloard</button>
+    <a id="download"></a>
+</div>
+<script>
+    const constraints = {
+      video: true
+    };
+
+    async function capture() {
+      navigator.mediaDevices.getUserMedia(constraints)
+      .then(async function(stream) {
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+        video.onloadedmetadata = function(e) {
+          video.play();
+        };
+      }).catch(function(err) {
+        console.error(err);
+      });
+    }
+    function save() {
+      const canvas = document.getElementById('canvas');
+      const video = document.getElementById('video');
+      const teste = document.querySelector("#teste");
+      canvas.getContext('2d')
+      .drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataURL = canvas.toDataURL();
+      //aqui faço o envio
+      $.ajax({
+          type: "POST",
+            url: "/Home/SavePicture",
+            data: { dataImage:  dataURL}
+      }).done(function(result){
+          if (result.status === "success") {
+
+              alert('Sucesso!');
+          }
+      });
+      const link = document.getElementById('download');
+      link.href = dataURL;
+      link.download = 'screenshot.png';
+      link.click();
+    }
+    function RecuperarImagem() {
+      //aqui faço o envio
+      $.ajax({
+          type: "GET",
+            url: "/Home/RecuperarImagem",
+            data: { id:  3}
+      }).done(function(result){
+          if (result.status === "success") {
+              console.log(result);
+              var image = new Image();
+              image.src = result.imagem;
+              image.onload = function(){
+                  var canvas = document.querySelector("#canvas");
+                  canvas.width = image.width;
+                  canvas.height = image.height;
+                  var context = canvas.getContext("2d");
+                  context.drawImage(image, 0, 0);
+              }
+              
+          }
+      });
+    }
+    function BaixarArquivo() {
+      //aqui faço o envio
+      $.ajax({
+          type: "GET",
+            url: "/Home/Download",
+            data: { id:  4}
+      }).done(function(result){
+          if (result.status === "success") {
+              alert("Sucesso!")
+              const link = document.getElementById('download');
+              link.href = result.arquivo;
+              link.download = result.nome;
+              link.click();
+
+          }
+      });
+    }
+
+</script>
